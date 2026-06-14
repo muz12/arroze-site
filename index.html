@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arroze — Bot de Discord</title>
+<link rel="icon" href="arroze-mascote.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sumi: #110b1d;
+    --sumi-deep: #0a0712;
+    --yozakura: #271c40;
+    --yozakura-soft: #322750;
+    --murasaki: #9b80e0;
+    --murasaki-bright: #c0adf5;
+    --gohan: #f7f1e6;
+    --sakura: #f2b8d8;
+    --kemuri: #a79bc4;
+    --font-display: 'Zen Maru Gothic', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    font-family: var(--font-body);
+    background: var(--sumi);
+    color: var(--gohan);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  a{ color: inherit; text-decoration: none; }
+
+  /* ---------- Brush asterisk (signature element) ---------- */
+  .brush-mark{
+    position:absolute;
+    width: var(--size, 90px);
+    height: var(--size, 90px);
+    transform: rotate(var(--rot, 0deg));
+    opacity: var(--op, .12);
+    pointer-events:none;
+    z-index: 0;
+  }
+  .brush-mark span{
+    position:absolute;
+    top:50%; left:50%;
+    width:100%;
+    height:11%;
+    background: var(--murasaki);
+    border-radius: 50px;
+    transform-origin:center;
+  }
+  .brush-mark span:nth-child(1){ transform: translate(-50%,-50%) rotate(0deg); }
+  .brush-mark span:nth-child(2){ transform: translate(-50%,-50%) rotate(90deg); }
+  .brush-mark span:nth-child(3){ transform: translate(-50%,-50%) rotate(45deg) scaleX(.75); }
+  .brush-mark span:nth-child(4){ transform: translate(-50%,-50%) rotate(135deg) scaleX(.75); }
+
+  /* ---------- Nav ---------- */
+  header.nav{
+    position: sticky;
+    top:0;
+    z-index: 50;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 18px clamp(20px, 6vw, 64px);
+    background: rgba(17,11,29,.78);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(155,128,224,.15);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family: var(--font-display);
+    font-weight:900;
+    font-size: clamp(20px, 3vw, 26px);
+    letter-spacing: .5px;
+  }
+  .brand img{
+    width: 42px; height:42px;
+    border-radius:50%;
+    box-shadow: 0 0 0 2px var(--murasaki), 0 0 18px rgba(155,128,224,.5);
+  }
+  nav.links{
+    display:flex;
+    gap: clamp(18px, 3vw, 38px);
+    font-weight:600;
+    font-size:15px;
+    color: var(--kemuri);
+  }
+  nav.links a:hover{ color: var(--murasaki-bright); }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 11px 24px;
+    border-radius: 999px;
+    font-weight:700;
+    font-size:15px;
+    font-family: var(--font-display);
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn-primary{
+    background: linear-gradient(135deg, var(--murasaki), #7a5fc4);
+    color: var(--sumi-deep);
+    box-shadow: 0 6px 24px -8px rgba(155,128,224,.7);
+  }
+  .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 28px -8px rgba(155,128,224,.9); }
+  .btn-ghost{
+    border: 1.5px solid rgba(247,241,230,.25);
+    color: var(--gohan);
+  }
+  .btn-ghost:hover{ border-color: var(--murasaki-bright); color: var(--murasaki-bright); }
+
+  @media (max-width: 760px){
+    nav.links{ display:none; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 40px;
+    padding: clamp(50px, 9vw, 110px) clamp(20px, 6vw, 64px);
+    max-width: 1280px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+  }
+  .hero-text{
+    flex: 1 1 420px;
+    position:relative;
+    z-index:2;
+    animation: rise .9s ease both;
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color: var(--sakura);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    animation: rise .9s ease .05s both;
+  }
+  .hero h1{
+    font-family: var(--font-display);
+    font-weight:900;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: .98;
+    margin-bottom: 18px;
+    animation: rise .9s ease .12s both;
+  }
+  .hero h1 span{
+    color: var(--murasaki-bright);
+  }
+  .hero p.lead{
+    font-size: clamp(17px, 2vw, 20px);
+    color: var(--kemuri);
+    max-width: 480px;
+    margin-bottom: 32px;
+    animation: rise .9s ease .22s both;
+  }
+  .hero-actions{
+    display:flex;
+    gap:16px;
+    flex-wrap: wrap;
+    animation: rise .9s ease .32s both;
+  }
+  .hero-meta{
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--kemuri);
+    letter-spacing: .5px;
+    animation: rise .9s ease .4s both;
+  }
+  .hero-meta b{ color: var(--murasaki-bright); }
+
+  .hero-art{
+    position:relative;
+    flex: 1 1 380px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height: 380px;
+    z-index:1;
+  }
+  .hero-art img{
+    width: 100%;
+    max-width: 420px;
+    border-radius:50%;
+    box-shadow: 0 0 0 4px rgba(155,128,224,.35), 0 30px 80px -20px rgba(155,128,224,.5);
+    animation: rise 1.1s ease .15s both, hover-float 7s ease-in-out 1.1s infinite;
+  }
+
+  /* floating rice grains */
+  .grain{
+    position:absolute;
+    width: 16px; height: 24px;
+    background: var(--gohan);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    opacity:.85;
+    box-shadow: 0 0 10px rgba(247,241,230,.4);
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(24px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @keyframes hover-float{
+    0%,100%{ transform: translateY(0); }
+    50%{ transform: translateY(-14px); }
+  }
+  @keyframes float{
+    0%,100%{ transform: translateY(0) rotate(0deg); }
+    50%{ transform: translateY(-22px) rotate(18deg); }
+  }
+
+  /* ---------- Features ---------- */
+  .section{
+    position:relative;
+    padding: clamp(60px, 9vw, 120px) clamp(20px, 6vw, 64px);
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .section-head{
+    text-align:center;
+    margin-bottom: 56px;
+    position:relative;
+    z-index:2;
+  }
+  .section-head .eyebrow{ justify-content:center; width:100%; }
+  .section-head h2{
+    font-family: var(--font-display);
+    font-weight:900;
+    font-size: clamp(34px, 5vw, 52px);
+  }
+  .section-head p{
+    color: var(--kemuri);
+    max-width: 520px;
+    margin: 14px auto 0;
+  }
+
+  .feature-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 22px;
+    position:relative;
+    z-index:2;
+  }
+  .feature-card{
+    background: linear-gradient(160deg, var(--yozakura-soft), var(--yozakura) 70%);
+    border: 1px solid rgba(155,128,224,.18);
+    border-radius: 22px;
+    padding: 32px 26px;
+    transition: transform .25s ease, border-color .25s ease;
+  }
+  .feature-card:hover{
+    transform: translateY(-6px);
+    border-color: rgba(155,128,224,.5);
+  }
+  .feature-card .icon{
+    font-size: 30px;
+    width: 56px; height:56px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius: 16px;
+    background: rgba(155,128,224,.14);
+    margin-bottom: 18px;
+  }
+  .feature-card h3{
+    font-family: var(--font-display);
+    font-size: 21px;
+    margin-bottom: 8px;
+  }
+  .feature-card p{
+    color: var(--kemuri);
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  .feature-card .cmds{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .feature-card .cmds code{
+    font-family: 'Inter', monospace;
+    font-size: 12.5px;
+    background: rgba(11,7,18,.5);
+    color: var(--murasaki-bright);
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(155,128,224,.18);
+  }
+
+  /* ---------- Commands ---------- */
+  .commands-wrap{
+    background: var(--yozakura);
+    border-radius: 28px;
+    padding: clamp(28px, 5vw, 56px);
+    position:relative;
+    overflow:hidden;
+    z-index:2;
+    border: 1px solid rgba(155,128,224,.18);
+  }
+  .commands-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap: 36px;
+  }
+  .commands-grid h4{
+    font-family: var(--font-display);
+    color: var(--murasaki-bright);
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .commands-grid ul{ list-style:none; }
+  .commands-grid li{
+    display:flex;
+    gap:10px;
+    padding: 7px 0;
+    font-size: 15px;
+    color: var(--gohan);
+    border-bottom: 1px dashed rgba(155,128,224,.15);
+  }
+  .commands-grid li:last-child{ border-bottom:none; }
+  .commands-grid li .mark{
+    color: var(--murasaki);
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .commands-grid li code{
+    color: var(--murasaki-bright);
+    font-family: 'Inter', monospace;
+  }
+
+  /* ---------- CTA band ---------- */
+  .cta-band{
+    text-align:center;
+    position:relative;
+    z-index:2;
+  }
+  .cta-band h2{
+    font-family: var(--font-display);
+    font-weight:900;
+    font-size: clamp(32px, 5vw, 50px);
+    margin-bottom: 16px;
+  }
+  .cta-band p{
+    color: var(--kemuri);
+    max-width: 480px;
+    margin: 0 auto 30px;
+  }
+  .cta-band .hero-actions{ justify-content:center; }
+
+  /* ---------- Footer ---------- */
+  footer{
+    border-top: 1px solid rgba(155,128,224,.15);
+    padding: 36px clamp(20px,6vw,64px);
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    align-items:center;
+    justify-content:space-between;
+    color: var(--kemuri);
+    font-size: 14px;
+    position:relative;
+    z-index:2;
+  }
+  footer .f-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family: var(--font-display);
+    font-weight:700;
+    color: var(--gohan);
+  }
+  footer .f-brand img{ width:28px; height:28px; border-radius:50%; }
+  footer .f-links{ display:flex; gap:24px; }
+  footer .f-links a:hover{ color: var(--murasaki-bright); }
+
+  @media (max-width: 600px){
+    footer{ flex-direction:column; text-align:center; justify-content:center; }
+    footer .f-links{ flex-wrap:wrap; justify-content:center; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- decorative brush marks scattered behind hero/sections -->
+  <div class="brush-mark" style="--size:140px; --rot:8deg; --op:.10; top:90px; left:4%;"><span></span><span></span><span></span><span></span></div>
+  <div class="brush-mark" style="--size:90px; --rot:-15deg; --op:.14; top:60%; left:88%;"><span></span><span></span><span></span><span></span></div>
+  <div class="brush-mark" style="--size:60px; --rot:22deg; --op:.18; top:18%; left:78%;"><span></span><span></span><span></span><span></span></div>
+  <div class="brush-mark" style="--size:110px; --rot:-6deg; --op:.08; top:115%; left:10%;"><span></span><span></span><span></span><span></span></div>
+
+  <header class="nav">
+    <div class="brand">
+      <img src="arroze-mascote.png" alt="Mascote do bot Arroze">
+      Arroze
+    </div>
+    <nav class="links">
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#comandos">Comandos</a>
+      <a href="https://twitch.tv/arr0ze" target="_blank" rel="noopener">Twitch</a>
+    </nav>
+    <a class="btn btn-primary" href="https://discord.com/oauth2/authorize?client_id=827118058425417729&permissions=8&scope=bot" target="_blank" rel="noopener">Convidar</a>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-text">
+        <div class="eyebrow">🍙 Bot de Discord</div>
+        <h1>Arro<span>ze</span></h1>
+        <p class="lead">
+          Um bolinho de arroz com espírito de ninja. Música, jogos e ferramentas de
+          administração — tudo num pacotinho pronto para o teu servidor.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://discord.com/oauth2/authorize?client_id=827118058425417729&permissions=8&scope=bot" target="_blank" rel="noopener">Adicionar ao servidor</a>
+          <a class="btn btn-ghost" href="https://github.com/muz12/arroze" target="_blank" rel="noopener">Ver código no GitHub</a>
+        </div>
+        <p class="hero-meta">Prefixo de comandos: <b>!</b> &nbsp;·&nbsp; em desenvolvimento ativo desde sempre 🌱</p>
+      </div>
+      <div class="hero-art">
+        <span class="grain" style="top:10%; left:8%; animation-delay:0s;"></span>
+        <span class="grain" style="top:75%; left:5%; animation-delay:1.4s; width:12px; height:18px;"></span>
+        <span class="grain" style="top:20%; left:90%; animation-delay:.7s; width:13px; height:20px;"></span>
+        <span class="grain" style="top:80%; left:88%; animation-delay:2.1s;"></span>
+        <img src="arroze-mascote.png" alt="Mascote Arroze, um bolinho de arroz ninja">
+      </div>
+    </section>
+
+    <section class="section" id="funcionalidades">
+      <div class="section-head">
+        <div class="eyebrow">✳ O que ele faz</div>
+        <h2>Funcionalidades</h2>
+        <p>Cada categoria de comandos foi pensada para tornar o teu servidor mais ativo e fácil de gerir.</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">🎵</div>
+          <h3>Música</h3>
+          <p>Reproduz as tuas músicas favoritas diretamente nos canais de voz do servidor.</p>
+          <div class="cmds"><code>!play</code><code>!skip</code><code>!queue</code></div>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🎮</div>
+          <h3>Diversão</h3>
+          <p>Comandos divertidos para interagir com os membros e animar as conversas.</p>
+          <div class="cmds"><code>!kiss</code><code>!say</code></div>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🛡️</div>
+          <h3>Administração</h3>
+          <p>Ferramentas simples de moderação para manter o servidor organizado.</p>
+          <div class="cmds"><code>!clear</code><code>!prefix</code></div>
+        </div>
+        <div class="feature-card">
+          <div class="icon">ℹ️</div>
+          <h3>Informações</h3>
+          <p>Consulta dados sobre utilizadores, o servidor e o próprio bot.</p>
+          <div class="cmds"><code>!userinfo</code><code>!serverinfo</code><code>!botinfo</code></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="comandos">
+      <div class="section-head">
+        <div class="eyebrow">✳ Referência rápida</div>
+        <h2>Lista de comandos</h2>
+        <p>Usa o prefixo <code style="color:var(--murasaki-bright)">!</code> antes de cada comando.</p>
+      </div>
+      <div class="commands-wrap">
+        <div class="commands-grid">
+          <div>
+            <h4>Música</h4>
+            <ul>
+              <li><span class="mark">✳</span> <code>!play [nome/link]</code></li>
+              <li><span class="mark">✳</span> <code>!skip</code></li>
+              <li><span class="mark">✳</span> <code>!queue</code></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Diversão</h4>
+            <ul>
+              <li><span class="mark">✳</span> <code>!kiss @utilizador</code></li>
+              <li><span class="mark">✳</span> <code>!say [mensagem]</code></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Administração</h4>
+            <ul>
+              <li><span class="mark">✳</span> <code>!clear [quantidade]</code></li>
+              <li><span class="mark">✳</span> <code>!prefix [novo prefixo]</code></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Informações</h4>
+            <ul>
+              <li><span class="mark">✳</span> <code>!userinfo @utilizador</code></li>
+              <li><span class="mark">✳</span> <code>!serverinfo</code></li>
+              <li><span class="mark">✳</span> <code>!botinfo</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta-band">
+      <h2>Pronto para convidar o Arroze? 🍙</h2>
+      <p>É grátis, é leve e cabe perfeitamente entre os teus outros bots favoritos.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://discord.com/oauth2/authorize?client_id=827118058425417729&permissions=8&scope=bot" target="_blank" rel="noopener">Adicionar ao Discord</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="f-brand">
+      <img src="arroze-mascote.png" alt="">
+      Arroze
+    </div>
+    <div class="f-links">
+      <a href="https://github.com/muz12/arroze" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://twitch.tv/arr0ze" target="_blank" rel="noopener">Twitch</a>
+      <a href="https://discord.com/oauth2/authorize?client_id=827118058425417729&permissions=8&scope=bot" target="_blank" rel="noopener">Convidar</a>
+    </div>
+    <div>feito com 🍚 e ❤️</div>
+  </footer>
+
+</body>
+</html>
